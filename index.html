@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사주 오행 기질 테스트 — 四柱五行</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:     #0A0907;
+  --bg2:    #111009;
+  --bg3:    #1A1810;
+  --ink:    #F0EAD6;
+  --ink2:   #B8B09A;
+  --ink3:   #706A56;
+  --gold:   #C9A84C;
+  --gold2:  #E8C878;
+  --gold3:  #F5DFA0;
+  --border: #2A2618;
+  --border2:#1E1C12;
+
+  --wood:  #4A8C3A; --wood-l: rgba(74,140,58,0.12);
+  --fire:  #C0392B; --fire-l: rgba(192,57,43,0.12);
+  --earth: #A07820; --earth-l:rgba(160,120,32,0.12);
+  --metal: #4A6E9A; --metal-l:rgba(74,110,154,0.12);
+  --water: #2A5080; --water-l:rgba(42,80,128,0.12);
+
+  --serif: 'Nanum Myeongjo', serif;
+  --sans:  'Noto Sans KR', sans-serif;
+  --r: 4px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* 먹지 노이즈 텍스처 */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.055'/%3E%3C/svg%3E");
+  background-size: 300px;
+}
+
+/* 금박 수평선 */
+.gold-line {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0.5;
+}
+
+/* ══════════════════════════════
+   COVER
+══════════════════════════════ */
+#cover {
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 4rem 1.5rem 4rem;
+  position: relative; overflow: hidden; text-align: center;
+}
+
+/* 배경 동심원 */
+.bg-rings { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.ring {
+  position: absolute; border-radius: 50%; border: 1px solid var(--gold);
+  top: 50%; left: 50%; transform: translate(-50%, -50%);
+  animation: ringPulse 8s ease-in-out infinite;
+}
+.ring1 { width: 720px; height: 720px; opacity: 0.04; animation-delay: 0s; }
+.ring2 { width: 520px; height: 520px; opacity: 0.06; animation-delay: -2s; }
+.ring3 { width: 340px; height: 340px; opacity: 0.08; animation-delay: -4s; }
+.ring4 { width: 180px; height: 180px; opacity: 0.10; animation-delay: -6s; }
+
+@keyframes ringPulse {
+  0%,100% { transform: translate(-50%,-50%) scale(1); opacity: inherit; }
+  50%      { transform: translate(-50%,-50%) scale(1.04); }
+}
+
+/* 태극 심볼 */
+.taiji {
+  font-size: 5rem; margin-bottom: 1.5rem; position: relative;
+  color: var(--gold); line-height: 1;
+  filter: drop-shadow(0 0 20px rgba(201,168,76,0.4));
+  animation: taijiSpin 20s linear infinite;
+}
+@keyframes taijiSpin { to { transform: rotate(360deg); } }
+
+/* 금박 배지 */
+.cover-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 13px; letter-spacing: 0.2em; font-weight: 500;
+  color: var(--gold2); border: 1px solid rgba(201,168,76,0.4);
+  padding: 6px 20px; margin-bottom: 2rem; position: relative;
+  font-family: var(--sans);
+}
+.cover-badge::before, .cover-badge::after {
+  content: '◈'; font-size: 8px; color: var(--gold);
+}
+
+/* 메인 타이틀 */
+.cover-title {
+  font-family: var(--serif);
+  position: relative; margin-bottom: 1rem;
+}
+.cover-title .hanja-top {
+  display: block; font-size: 15px; letter-spacing: 0.5em;
+  color: var(--gold); margin-bottom: 0.5rem; font-weight: 400;
+  text-shadow: 0 0 20px rgba(201,168,76,0.4);
+}
+.cover-title .main {
+  display: block;
+  font-size: clamp(3rem, 10vw, 5.5rem);
+  font-weight: 800; line-height: 1.05; letter-spacing: -0.01em;
+  color: var(--ink);
+  background: linear-gradient(135deg, var(--ink) 0%, var(--gold3) 40%, var(--ink) 70%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  background-size: 200%;
+  animation: goldShift 5s ease infinite alternate;
+}
+@keyframes goldShift { 0%{background-position:0%} 100%{background-position:100%} }
+
+.cover-sub {
+  font-size: 14px; color: var(--ink2); line-height: 1.9;
+  margin-bottom: 2.5rem; position: relative; font-weight: 300;
+  max-width: 360px;
+}
+.cover-sub em { color: var(--gold2); font-style: normal; font-weight: 500; }
+
+/* 오행 뱃지 행 */
+.ohang-strip {
+  display: flex; gap: 8px; justify-content: center;
+  flex-wrap: wrap; margin-bottom: 2.5rem; position: relative;
+}
+.oh-chip {
+  font-size: 13px; font-weight: 500; padding: 5px 14px;
+  border: 1px solid; letter-spacing: 0.04em;
+  font-family: var(--sans);
+}
+
+/* 입력 폼 */
+.info-form {
+  background: var(--bg2);
+  border: 1px solid rgba(201,168,76,0.25);
+  padding: 2rem;
+  width: 100%; max-width: 420px;
+  margin-bottom: 2rem; position: relative;
+}
+
+.form-title {
+  font-family: var(--serif);
+  font-size: 16px; font-weight: 700; color: var(--gold2);
+  margin-bottom: 1.5rem; text-align: center;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(201,168,76,0.2);
+  letter-spacing: 0.08em;
+}
+
+.field { margin-bottom: 1.25rem; }
+.field:last-child { margin-bottom: 0; }
+
+.field label {
+  display: block; font-size: 13px; font-weight: 500;
+  letter-spacing: 0.1em; color: var(--gold);
+  margin-bottom: 7px; font-family: var(--sans);
+}
+
+.field-row { display: flex; gap: 8px; }
+
+.field select, .field input, .name-inp {
+  padding: 11px 14px;
+  font-size: 14px; font-family: var(--sans);
+  color: var(--ink); background: var(--bg3);
+  border: 1px solid var(--border);
+  outline: none; transition: border-color 0.15s;
+  width: 100%;
+}
+.field select { -webkit-appearance:none; appearance:none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23706A56'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px;
+  background-color: var(--bg3);
+}
+.field select option { background: var(--bg3); }
+
+.field select:focus, .field input:focus, .name-inp:focus { border-color: var(--gold); }
+.field input[type="number"] { -moz-appearance: textfield; }
+.field input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+.name-inp::placeholder { color: var(--ink3); }
+
+.form-warn {
+  font-size: 13px; color: var(--fire); margin-top: 8px;
+  opacity: 0; transition: opacity 0.2s; min-height: 18px;
+}
+.form-warn.show { opacity: 1; }
+
+/* 시작 버튼 */
+.start-btn {
+  position: relative; cursor: pointer; border: none;
+  background: transparent; padding: 0; margin-bottom: 1.5rem;
+}
+.start-btn-inner {
+  display: flex; align-items: center; gap: 10px;
+  padding: 15px 48px;
+  border: 1px solid var(--gold);
+  color: var(--gold2);
+  font-family: var(--serif);
+  font-size: 17px; font-weight: 700; letter-spacing: 0.12em;
+  position: relative; overflow: hidden; transition: all 0.25s;
+}
+.start-btn-inner::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(201,168,76,0.15), transparent);
+  transform: translateX(-100%); transition: transform 0.4s ease;
+}
+.start-btn:hover .start-btn-inner { color: var(--gold3); border-color: var(--gold2); }
+.start-btn:hover .start-btn-inner::before { transform: translateX(100%); }
+
+.cover-meta {
+  font-size: 13px; color: var(--ink3); letter-spacing: 0.1em;
+  position: relative; font-family: var(--sans);
+}
+
+/* ══════════════════════════════
+   QUIZ
+══════════════════════════════ */
+#quiz { display: none; min-height: 100vh; background: var(--bg); }
+
+/* 헤더 */
+.qz-hd {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(10,9,7,0.95); backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+  height: 54px; padding: 0 1.5rem;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.qz-logo {
+  font-family: var(--serif); font-size: 17px; font-weight: 700;
+  color: var(--gold); letter-spacing: 0.12em;
+}
+.qz-prog-wrap { flex: 1; max-width: 260px; margin: 0 1.5rem; display: flex; align-items: center; gap: 10px; }
+.qz-track { flex: 1; height: 1px; background: var(--border2); overflow: hidden; }
+.qz-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--gold), var(--gold2));
+  transition: width 0.4s ease;
+  box-shadow: 0 0 6px var(--gold);
+}
+.qz-num { font-size: 13px; font-weight: 500; color: var(--ink3); white-space: nowrap; font-family: var(--sans); }
+.qz-num span { color: var(--gold2); font-weight: 700; }
+
+/* 질문 */
+.q-wrap { max-width: 640px; margin: 0 auto; padding: 4rem 1.5rem 3rem; }
+
+.q-slide { display: none; animation: qFade 0.35s ease both; }
+.q-slide.active { display: block; }
+@keyframes qFade {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.q-ohang-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 500; letter-spacing: 0.12em;
+  padding: 5px 14px; border: 1px solid; margin-bottom: 1.5rem;
+  font-family: var(--sans);
+}
+.q-num-label {
+  font-size: 13px; color: var(--ink3); letter-spacing: 0.1em;
+  margin-bottom: 0.6rem; font-family: var(--sans);
+}
+.q-text {
+  font-family: var(--serif);
+  font-size: clamp(1.3rem, 4.5vw, 1.9rem);
+  font-weight: 700; line-height: 1.45; color: var(--ink);
+  margin-bottom: 0.6rem; letter-spacing: -0.01em;
+}
+.q-sub {
+  font-size: 14px; color: var(--ink3); margin-bottom: 2rem;
+  font-weight: 300; line-height: 1.6;
+}
+
+/* 선택지 2열 */
+.opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.opt-btn {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  color: var(--ink2);
+  padding: 18px 20px;
+  font-size: 14px; font-family: var(--sans); font-weight: 400;
+  text-align: left; cursor: pointer;
+  transition: all 0.18s; line-height: 1.65;
+  display: flex; flex-direction: column; gap: 7px;
+  position: relative; overflow: hidden;
+}
+.opt-btn::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px;
+  background: var(--gold); transform: scaleY(0); transition: transform 0.2s;
+  transform-origin: bottom;
+}
+.opt-key {
+  font-size: 13px; font-weight: 700; color: var(--gold);
+  letter-spacing: 0.1em; font-family: var(--sans);
+}
+.opt-btn:hover { border-color: var(--gold); color: var(--ink); background: rgba(201,168,76,0.06); }
+.opt-btn:hover::before { transform: scaleY(1); }
+.opt-btn.selected { border-color: var(--gold); background: rgba(201,168,76,0.1); color: var(--gold2); }
+.opt-btn.selected::before { transform: scaleY(1); background: var(--gold2); }
+.opt-btn.selected .opt-key { color: var(--gold2); }
+
+/* ══════════════════════════════
+   RESULT
+══════════════════════════════ */
+#result { display: none; background: var(--bg); }
+
+.r-hero {
+  padding: 6rem 1.5rem 5rem; text-align: center;
+  position: relative; overflow: hidden;
+  border-bottom: 1px solid rgba(201,168,76,0.15);
+}
+
+.r-hero-rings { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.r-ring {
+  position: absolute; border-radius: 50%;
+  top: 50%; left: 50%; transform: translate(-50%,-50%);
+  border: 1px solid;
+}
+
+.r-kicker {
+  font-size: 13px; letter-spacing: 0.2em; color: var(--gold);
+  margin-bottom: 1rem; position: relative; font-family: var(--sans); font-weight: 500;
+}
+
+.r-ohang-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 700; letter-spacing: 0.14em;
+  padding: 6px 22px; border: 1px solid var(--gold);
+  color: var(--gold2); margin-bottom: 1.75rem; position: relative;
+  font-family: var(--sans);
+}
+
+.r-symbol {
+  font-size: 5.5rem; display: block; margin-bottom: 1rem; position: relative;
+  animation: popGold 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+  filter: drop-shadow(0 0 24px rgba(201,168,76,0.5));
+}
+@keyframes popGold { from{transform:scale(0.2) rotate(-15deg);opacity:0} to{transform:scale(1) rotate(0);opacity:1} }
+
+.r-hanja {
+  font-family: var(--serif); font-size: 15px; letter-spacing: 0.3em;
+  color: var(--gold); margin-bottom: 0.4rem; position: relative;
+  text-shadow: 0 0 16px rgba(201,168,76,0.4);
+}
+
+.r-name {
+  font-family: var(--serif);
+  font-size: clamp(2.4rem, 9vw, 4.5rem);
+  font-weight: 800; line-height: 1.08; letter-spacing: -0.01em;
+  margin-bottom: 0.75rem; position: relative;
+}
+
+.r-desc {
+  font-size: 14px; color: var(--ink2); font-weight: 300;
+  line-height: 1.95; max-width: 400px; margin: 0 auto; position: relative;
+}
+
+/* 섹션 공통 */
+.r-sec { max-width: 660px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+.r-sec-title {
+  font-family: var(--serif); font-size: 15px; font-weight: 700;
+  color: var(--gold); letter-spacing: 0.15em;
+  margin-bottom: 1.5rem; padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(201,168,76,0.2);
+  display: flex; align-items: center; gap: 8px;
+}
+.r-sec-title::before { content: '◈'; font-size: 10px; }
+.r-div { height: 1px; background: rgba(201,168,76,0.1); max-width: 660px; margin: 0 auto; }
+
+/* 4기둥 카드 */
+.pillars { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+.pillar-card {
+  background: var(--bg2); border: 1px solid rgba(201,168,76,0.2);
+  padding: 1.25rem 0.75rem; text-align: center;
+}
+.pillar-label { font-size: 13px; color: var(--ink3); margin-bottom: 0.75rem; letter-spacing: 0.06em; font-family: var(--sans); }
+.pillar-stem  { font-family: var(--serif); font-size: 2.2rem; font-weight: 700; line-height: 1; display: block; margin-bottom: 4px; }
+.pillar-branch{ font-family: var(--serif); font-size: 1.6rem; font-weight: 400; line-height: 1; display: block; margin-bottom: 8px; }
+.pillar-korean{ font-size: 13px; color: var(--ink3); line-height: 1.5; font-family: var(--sans); }
+.pillar-animal{ font-size: 1.5rem; display: block; margin-top: 6px; }
+
+/* 오행 바 */
+.ohang-bars { display: flex; flex-direction: column; gap: 16px; }
+.ohang-bar-row { display: flex; align-items: center; gap: 12px; }
+.ohang-lbl-wrap { display: flex; align-items: center; gap: 7px; min-width: 110px; }
+.ohang-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.ohang-lbl { font-size: 13px; font-weight: 500; font-family: var(--sans); }
+.ohang-track { flex: 1; height: 3px; background: var(--border); overflow: hidden; }
+.ohang-fill { height: 100%; width: 0%; transition: width 1.2s cubic-bezier(0.4,0,0.2,1); }
+.ohang-pct { font-size: 13px; font-weight: 700; min-width: 36px; text-align: right; font-family: var(--sans); }
+
+/* 키워드 */
+.kw-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+.kw {
+  font-size: 13px; font-weight: 500; padding: 6px 16px;
+  border: 1px solid; letter-spacing: 0.04em; font-family: var(--sans);
+}
+
+/* 궁합 */
+.compat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.compat-card { background: var(--bg2); border: 1px solid var(--border); padding: 1.4rem; }
+.compat-tag { font-size: 13px; color: var(--gold); margin-bottom: 9px; font-weight: 500; letter-spacing: 0.08em; font-family: var(--sans); }
+.compat-name { font-family: var(--serif); font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; }
+.compat-desc { font-size: 13px; color: var(--ink3); font-weight: 300; line-height: 1.65; }
+
+/* 운세 */
+.fortune-list { display: flex; flex-direction: column; }
+.fortune-item { display: flex; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--border2); }
+.fortune-item:last-child { border-bottom: none; }
+.fortune-ico { font-size: 1.1rem; min-width: 22px; }
+.fortune-txt { font-size: 14px; color: var(--ink2); font-weight: 300; line-height: 1.8; }
+.fortune-txt strong { color: var(--gold3); font-weight: 700; }
+
+/* 경고 */
+.warn-box {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-left: 2px solid var(--gold); padding: 1.5rem;
+}
+.warn-box p { font-size: 14px; color: var(--ink2); line-height: 1.9; font-weight: 300; }
+.warn-box p strong { color: var(--ink); font-weight: 700; }
+
+/* 완료 버튼 */
+.done-wrap { text-align: center; padding: 3rem 1.5rem 6rem; }
+.done-btn {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--ink3); padding: 13px 36px;
+  font-family: var(--sans); font-size: 14px; letter-spacing: 0.06em;
+  cursor: pointer; transition: all 0.18s;
+}
+.done-btn:hover { border-color: var(--gold); color: var(--gold2); }
+
+/* 완료 오버레이 */
+#ov {
+  display: none; position: fixed; inset: 0; z-index: 999;
+  background: var(--bg);
+  flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 2rem;
+}
+#ov.show { display: flex; }
+.ov-sym { font-size: 5rem; margin-bottom: 1.5rem; animation: popGold 0.5s ease; filter: drop-shadow(0 0 20px rgba(201,168,76,0.5)); }
+.ov-title { font-family: var(--serif); font-size: 1.8rem; font-weight: 800; color: var(--gold2); margin-bottom: 0.75rem; }
+.ov-desc { font-size: 14px; color: var(--ink3); line-height: 2; font-weight: 300; letter-spacing: 0.04em; }
+
+/* 스크롤바 */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--gold); }
+
+/* ── 모바일 ── */
+@media (max-width: 600px) {
+  #cover { padding: 3rem 1.25rem 3.5rem; }
+  .taiji { font-size: 3.5rem; }
+  .cover-title .main { font-size: clamp(2.6rem, 12vw, 4rem); }
+  .cover-sub { font-size: 14px; }
+  .info-form { padding: 1.5rem; }
+  .start-btn-inner { padding: 13px 32px; font-size: 15px; }
+  .ohang-strip { gap: 6px; }
+  .oh-chip { font-size: 12px; padding: 4px 10px; }
+
+  .qz-hd { padding: 0 1rem; }
+  .qz-prog-wrap { max-width: 180px; margin: 0 1rem; }
+  .q-wrap { padding: 2.5rem 1.25rem 2.5rem; }
+  .q-text { font-size: clamp(1.2rem, 5.5vw, 1.6rem); }
+  .opts { grid-template-columns: 1fr; gap: 8px; }
+  .opt-btn { font-size: 14px; padding: 15px 16px; }
+
+  .r-hero { padding: 4rem 1.25rem 3.5rem; }
+  .r-name { font-size: clamp(2rem, 10vw, 3.2rem); }
+  .pillars { grid-template-columns: repeat(2,1fr); }
+  .compat-grid { grid-template-columns: 1fr; }
+  .r-sec { padding: 2rem 1.25rem; }
+  .ohang-lbl-wrap { min-width: 90px; }
+}
+
+@media (max-width: 380px) {
+  .pillars { grid-template-columns: repeat(2,1fr); }
+  .pillar-stem { font-size: 1.8rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════ COVER ══════════════════ -->
+<section id="cover">
+  <div class="bg-rings">
+    <div class="ring ring1"></div>
+    <div class="ring ring2"></div>
+    <div class="ring ring3"></div>
+    <div class="ring ring4"></div>
+  </div>
+
+  <span class="taiji">☯</span>
+
+  <div class="cover-badge">四柱推命 · 오행 기질 테스트</div>
+
+  <div class="cover-title">
+    <span class="hanja-top">木 火 土 金 水</span>
+    <span class="main">나의 사주<br>오행 기질은?</span>
+  </div>
+
+  <p class="cover-sub">
+    생년월일시를 입력하고 15가지 질문에 답하면<br>
+    당신의 <em>천간·지지와 오행 기질</em>을 분석해드려요.<br>
+    <span style="color:var(--ink3);font-size:13px">※ 음력 절기 기반 약 95% 정확도</span>
+  </p>
+
+  <div class="ohang-strip">
+    <span class="oh-chip" style="color:var(--wood);border-color:var(--wood);background:var(--wood-l)">🌱 木 목</span>
+    <span class="oh-chip" style="color:var(--fire);border-color:var(--fire);background:var(--fire-l)">🔥 火 화</span>
+    <span class="oh-chip" style="color:var(--earth);border-color:var(--earth);background:var(--earth-l)">🌍 土 토</span>
+    <span class="oh-chip" style="color:var(--metal);border-color:var(--metal);background:var(--metal-l)">⚔️ 金 금</span>
+    <span class="oh-chip" style="color:var(--water);border-color:var(--water);background:var(--water-l)">💧 水 수</span>
+  </div>
+
+  <div class="info-form">
+    <div class="form-title">生年月日時 입력</div>
+
+    <div class="field">
+      <label>이름</label>
+      <input type="text" id="inp-name" class="name-inp" placeholder="이름을 입력하세요" maxlength="20" autocomplete="off">
+    </div>
+
+    <div class="field">
+      <label>생년월일</label>
+      <div class="field-row">
+        <input type="number" id="inp-year" placeholder="년 (1900~2024)" min="1900" max="2024" style="flex:2.2">
+        <select id="inp-month" style="flex:1">
+          <option value="">월</option>
+          <option value="1">1월</option><option value="2">2월</option>
+          <option value="3">3월</option><option value="4">4월</option>
+          <option value="5">5월</option><option value="6">6월</option>
+          <option value="7">7월</option><option value="8">8월</option>
+          <option value="9">9월</option><option value="10">10월</option>
+          <option value="11">11월</option><option value="12">12월</option>
+        </select>
+        <select id="inp-day" style="flex:1">
+          <option value="">일</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>태어난 시간 <span style="font-weight:300;letter-spacing:0;color:var(--ink3);">(모르면 '모름' 선택)</span></label>
+      <select id="inp-hour">
+        <option value="-1">모름</option>
+        <option value="0">자시 (23:00~01:00) 🐭</option>
+        <option value="1">축시 (01:00~03:00) 🐮</option>
+        <option value="2">인시 (03:00~05:00) 🐯</option>
+        <option value="3">묘시 (05:00~07:00) 🐰</option>
+        <option value="4">진시 (07:00~09:00) 🐲</option>
+        <option value="5">사시 (09:00~11:00) 🐍</option>
+        <option value="6">오시 (11:00~13:00) 🐴</option>
+        <option value="7">미시 (13:00~15:00) 🐑</option>
+        <option value="8">신시 (15:00~17:00) 🐒</option>
+        <option value="9">유시 (17:00~19:00) 🐓</option>
+        <option value="10">술시 (19:00~21:00) 🐶</option>
+        <option value="11">해시 (21:00~23:00) 🐷</option>
+      </select>
+    </div>
+
+    <p class="form-warn" id="form-warn">생년월일을 입력해주세요</p>
+  </div>
+
+  <button class="start-btn" onclick="handleStart()">
+    <div class="start-btn-inner">◈ 사주 분석 시작 ◈</div>
+  </button>
+  <p class="cover-meta">[ 15문항 · 약 2분 · 오행 5가지 유형 ]</p>
+</section>
+
+<!-- ══════════════════ QUIZ ══════════════════ -->
+<section id="quiz">
+  <div class="qz-hd">
+    <span class="qz-logo">四柱五行</span>
+    <div class="qz-prog-wrap">
+      <div class="qz-track"><div class="qz-fill" id="qz-fill"></div></div>
+      <span class="qz-num"><span id="qz-cur">1</span> / 15</span>
+    </div>
+    <div style="width:40px"></div>
+  </div>
+
+  <div class="q-wrap">
+
+    <!-- Q1 -->
+    <div class="q-slide" id="q1">
+      <div class="q-ohang-tag" style="color:var(--wood);border-color:var(--wood);background:var(--wood-l)">🌱 木 · 목기</div>
+      <div class="q-num-label">Q 01 / 15</div>
+      <div class="q-text">새로운 프로젝트나 아이디어가 생기면?</div>
+      <div class="q-sub">변화와 성장에 대한 나의 태도</div>
+      <div class="opts">
+        <button class="opt-btn" onclick="answer(1,'W',2)"><span class="opt-key">一</span>바로 뛰어들어. 일단 시작하고 해보면서 키워나가는 게 맞아</button>
+        <button class="opt-btn" onclick="answer(1,'F',1)"><span class="opt-key">二</span>열정적으로 주변을 끌어들임. 이 아이디어 진짜 대박이야!</button>
+        <button class="opt-btn" onclick="answer(1,'E',1)"><span class="opt-key">三</span>현실 가능한지 먼저 검토. 기반이 있어야 시작할 수 있어</button>
+        <button class="opt-btn" onclick="answer(1,'M',1)"><span class="opt-key">四</span>장단점 분석하고 최선의 방법 찾아 정교하게 계획부터</button>
+      </div>
+    </div>
+
+    <!-- Q2 -->
+    <div class="q-slide" id="q2">
+      <div class="q-ohang-tag" style="color:var(--fire);border-color:var(--fire);background:var(--fire-l)">🔥 火 · 화기</div>
+      <div class="q-num-label">Q 02 / 15</div>
+      <div class="q-text">사람들 사이에서 나는 어떤 역할인가요?</div>
+      <div class="q-sub">관계 안에서 내가 자연스럽게 하는 역할</div>
+      <div class="opts">
+        <button class="opt-btn" onclick="answer(2,'F',2)"><span class="opt-key">一</span>분위기 주도. 내가 있으면 자리가 살아나는 편</button>
+        <button class="opt-btn" onclick="answer(2,'W',1)"><span class="opt-key">二</span>새로운 방향 제시. 어디 가자, 이거 해보자 먼저 말함</button>
+        <button class="opt-btn" onclick="answer(2,'Wa',1)"><span class="opt-key">三</span>조용히 듣고 공감. 말보다 옆에 있어주는 스타일</button>
+        <button class="opt-btn" onclick="answer(2,'M',1)"><span class="opt-key">四</span>정보 제공. 이거 알아? 이렇게 하면 더 좋아 조언하는 편</button>
+      </div>
+    </div>
+
+    <!-- Q3 -->
+    <div class="q-slide" id="q3">
+      <div class="q-ohang-tag" style="color:var(--earth);border-color:var(--earth);background:var(--earth-l)">🌍 土 · 토기</div>
+      <div class="q-num-label">Q 03 / 15</div>
+      <div class="q-text">힘든 일이 생겼을 때 나는?</div>
+      <div class="q-sub">위기 상황에서 나의 회복 방식</div>
+      <div class="opts">
+        <button class="opt-btn" onclick="answer(3,'E',2)"><span class="opt-key">一</span>일단 버팀. 내가 중심을 잡아야 주변이 안심하니까</button>
+        <button class="opt-btn" onclick="answer(3,'Wa',1)"><span class="opt-key">二</span>혼자 조용히 삭히다가 정리되면 말함</button>
+        <button class="opt-btn" onclick="answer(3,'F',1)"><span class="opt-key">三</span>주변에 털어놓고 에너지 받아야 회복됨</button>
+        <button class="opt-btn" onclick="answer(3,'W',1)"><span class="opt-key">四</span>다른 걸 시작함. 새로운 걸 하다 보면 잊혀짐</button>
+      </div>
+    </div>
+
+    <!-- Q4 -->
+    <div class="q-slide" id="q4">
+      <div class="q-ohang-tag" style="color:var(--metal);border-color:var(--metal);background:var(--metal-l)">⚔️ 金 · 금기</div>
+      <div class="q-num-label">Q 04 / 15</div>
+      <div class="q-text">일할 때 나의 스타일은?</div>
+      <div class="q-sub">업무에서 자연스럽게 나오는 내 방식</div>
+      <div class="opts">
+        <button class="opt-btn" onclick="answer(4,'M',2)"><span class="opt-key">一</span>체계적으로 계획 짜고 정확하게. 실수 없이 깔끔하게</button>
+        <button class="opt-btn" onclick="answer(4,'W',1)"><span class="opt-key">二</span>빠르게 시작해서 수정하는 방식. 일단 치고 나가야</button>
+        <button class="opt-btn" onclick="answer(4,'E',1)"><span class="opt-key">三</span>꼼꼼하게 기반 다지고 안정적으로 진행</button>
+        <button class="opt-btn" onclick="answer(4,'F',1)"><span class="opt-key">四</span>팀원들 에너지 올려가면서 함께 달리는 스타일</button>
+      </div>
+    </div>
+
+    <!-- Q5 -->
+    <div class="q-slide" id="q5">
+      <div class="q-ohang-tag" style="color:var(--water);border-color:var(--water);background:var(--water-l)">💧 水 · 수기</div>
+      <div class="q-num-label">Q 05 / 15</div>
+      <div class="q-text">혼자 있는 시간이 생기면?</div>
+      <div class="q-sub">고독과 사색에 대한 나의 태도</div>
+      <div class="opts">
+        <button class="opt-btn" onclick="answer(5,'Wa',2)"><span class="opt-key">一</span>깊이 생각하고 싶었던 것들 정리. 혼자 있어야 진짜 쉬는 느낌</button>
+        <button class="opt-btn" onclick="answer(5,'M',1)"><span class="opt-key">二</span>배우고 싶던 거 공부하거나 책 읽음. 성장의 기회</button>
+        <button class="opt-btn" onclick="answer(5,'F',1)"><span class="opt-key">三</span>빨리 누구 만나고 싶어짐. 혼자 있으면 에너지가 떨어져</button>
+        <button class="opt-btn" onclick="answer(5,'W',1)"><span class="opt-key">四</span>새로운 취미나 프로젝트 시작. 가만히 있으면 불안함</button>
+      </div>
+    </div>
+
+    <!-- Q6 -->
+    <div class="q-slide" id="q6">
+      <div class="q-ohang-tag" style="color:var(--wood);border-color:var(--wood);background:var(--wood-l)">🌱 木 · 목기</div>
+      <div class="q-num-label">Q 06 / 15</div>
+      <div class="q-text">갈등 상황이 생겼을 때 나는?</div>
+      <div class="q-sub">충돌 앞에서 나의 반응</div>
+      <div class="opts">
+        <button class="opt-btn" onclick="answer(6,'W',2)"><span class="opt-key">一</span>정면 돌파. 피하기보다 해결하고 앞으로 나아가는 게 맞아</button>
+        <button class="opt-btn" onclick="answer(6,'E',1)"><span class="opt-key">二</span>중립 지키며 조율. 양쪽 다 이해하고 합의점 찾기</button>
+        <button class="opt-btn" onclick="answer(6,'M',1)"><span class="opt-key">三</span>논리와 근거로 설득. 감정보다 팩트로 해결</button>
+        <button class="opt-btn" onclick="answer(6,'Wa',1)"><span class="opt-key">四</span>일단 물러서서 상대를 이해하려고 시간을 가짐</button>
+      </div>
+    </div>
+
+    <!-- Q7 -->
+    <div class="q-slide" id="q7">
+      <div class="q-ohang-tag" style="color:var(--fire);border-color:var(--fire);background:var(--fire-l)">🔥 火 · 화기</div>
+      <div class="q-num-label">Q 07 / 15</div>
+      <div class="q-text">나에게 가장 중요한 가치는?</div>
+      <div class="q-sub">삶에서 가장 소중하게 여기는 것</div>
+      <div class="opts">
+        <button class="opt-btn" onclick="answer(7,'F',2)"><span class="opt-key">一</span>열정과 사랑. 가슴이 뜨겁게 타오르는 삶이어야 해</button>
+        <button class="opt-btn" onclick="answer(7,'W',1)"><span class="opt-key">二</span>성장과 자유. 계속 발전하고 새로운 것을 경험해야</button>
+        <button class="opt-btn" onclick="answer(7,'E',1)"><span class="opt-key">三</span>안정과 신뢰. 믿을 수 있는 관계와 환경이 제일</button>
+        <button class="opt-btn" onclick="answer(7,'M',1)"><span class="opt-key">四</span>완성과 정의. 옳은 것을 끝까지 지키는 삶</button>
+      </div>
+    </div>
+
+    <!-- Q8 -->
+    <div class="q-slide" id="q8">
+      <div class="q-ohang-tag" style="color:var(--earth);border-color:var(--earth);background:var(--earth-l)">🌍 土 · 토기</div>
+      <div class="q-num-label">Q 08 / 15</div>
+      <div class="q-text">친구가 고민을 털어놓으면 나는?</div>
+      <div class="q-sub">타인의 어려움 앞에서 나의 방식</div>
+      <div class="opts">
+        <button class="opt-btn" onclick="answer(8,'E',2)"><span class="opt-key">一</span>끝까지 들어주고 든든하게 옆에 있어줌. 해결보다 존재가 중요</button>
+        <button class="opt-btn" onclick="answer(8,'M',1)"><span class="opt-key">二</span>해결책을 찾아줌. 뭐가 문제인지 파악하고 방법 제시</button>
+        <button class="opt-btn" onclick="answer(8,'F',1)"><span class="opt-key">三</span>공감하고 같이 흥분하면서 힘을 북돋아줌</button>
+        <button class="opt-btn" onclick="answer(8,'Wa',1)"><span class="opt-key">四</span>깊이 공감하고 상대의 내면까지 이해하려고 함</button>
+      </div>
+    </div>
+
+    <!-- Q9 -->
+    <div class="q-slide" id="q9">
+      <div class="q-ohang-tag" style="color:var(--metal);border-color:var(--metal);background:var(--metal-l)">⚔️ 金 · 금기</div>
+      <div class="q-num-label">Q 09 / 15</div>
+      <div class="q-text">결정을 내릴 때 나는?</div>
+      <div class="q-sub">의사결정 앞에서 나의 패턴</div>
+      <div class="opts">
+        <button class="opt-btn" onclick="answer(9,'M',2)"><span class="opt-key">一</span>충분히 분석하고 최선의 선택을 신중하게. 후회 없어야 해</button>
+        <button class="opt-btn" onclick="answer(9,'W',1)"><span class="opt-key">二</span>직감으로 빠르게. 너무 생각하면 기회를 놓침</button>
+        <button class="opt-btn" onclick="answer(9,'E',1)"><span class="opt-key">三</span>주변 상황과 영향을 고려해서 안전한 선택</button>
+        <button class="opt-btn" onclick="answer(9,'Wa',1)"><span class="opt-key">四</span>내면의 목소리에 따름. 논리보다 마음이 더 정확해</button>
+      </div>
+    </div>
+
+    <!-- Q10 -->
+    <div class="q-slide" id="q10">
+      <div class="q-ohang-tag" style="color:var(--water);border-color:var(--water);background:var(--water-l)">💧 水 · 수기</div>
+      <div class="q-num-label">Q 10 / 15</div>
+      <div class="q-text">나의 감정 표현 방식은?</div>
+      <div class="q-sub">감정을 다루는 나만의 방법</div>
+      <div class="opts">
+        <button class="opt-btn" onclick="answer(10,'Wa',2)"><span class="opt-key">一</span>내면에 깊이 담아두다가 천천히 표현. 감정이 깊은 편</button>
+        <button class="opt-btn" onclick="answer(10,'F',1)"><span class="opt-key">二</span>즉각적으로 표현. 기쁠 때 기쁘고 화날 때 화남</button>
+        <button class="opt-btn" onclick="answer(10,'E',1)"><span class="opt-key">三</span>담담하게 안정적으로. 감정 기복이 별로 없는 편</button>
+        <button class="opt-btn" onclick="answer(10,'M',1)"><span class="opt-key">四</span>논리적으로 정리한 다음 표현. 감정도 이유가 있어야 해</button>
+      </div>
+    </div>
+
+    <!-- Q11 -->
+    <div class="q-slide" id="q11">
+      <div class="q-ohang-tag" style="color:var(--wood);border-color:var(--wood);background:var(--wood-l)">🌱 木 · 목기</div>
+      <div class="q-num-label">Q 11 / 15</div>
+      <div class="q-text">스트레스를 받을 때 나는?</div>
+      <div class="q-sub">스트레스 해소 패턴</div>
+      <div class="opts">
+        <button class="opt-btn" onclick="answer(11,'W',2)"><span class="opt-key">一</span>운동이나 새로운 활동으로 에너지 발산. 움직여야 풀려</button>
+        <button class="opt-btn" onclick="answer(11,'Wa',1)"><span class="opt-key">二</span>조용히 혼자 있으면서 내면 정리. 시간이 약이야</button>
+        <button class="opt-btn" onclick="answer(11,'F',1)"><span class="opt-key">三</span>사람들 만나서 수다. 털어놓으면 낫더라고</button>
+        <button class="opt-btn" onclick="answer(11,'E',1)"><span class="opt-key">四</span>규칙적인 루틴으로 몸과 마음 다잡기. 균형이 중요</button>
+      </div>
+    </div>
+
+    <!-- Q12 -->
+    <div class="q-slide" id="q12">
+      <div class="q-ohang-tag" style="color:var(--fire);border-color:var(--fire);background:var(--fire-l)">🔥 火 · 화기</div>
+      <div class="q-num-label">Q 12 / 15</div>
+      <div class="q-text">여행을 간다면?</div>
+      <div class="q-sub">자유 시간을 보내는 나의 방식</div>
+      <div class="opts">
+        <button class="opt-btn" onclick="answer(12,'F',2)"><span class="opt-key">一</span>가보지 않은 곳, 새로운 사람들, 즉흥적인 만남이 최고</button>
+        <button class="opt-btn" onclick="answer(12,'M',1)"><span class="opt-key">二</span>완벽한 일정 짜고 놓치는 것 없이 알차게</button>
+        <button class="opt-btn" onclick="answer(12,'Wa',1)"><span class="opt-key">三</span>조용한 곳에서 자연과 함께 쉬는 것. 힐링이 목적</button>
+        <button class="opt-btn" onclick="answer(12,'E',1)"><span class="opt-key">四</span>믿을 수 있는 사람들과 편안하게. 어딜 가냐보다 누구랑이 중요</button>
+      </div>
+    </div>
+
+    <!-- Q13 -->
+    <div class="q-slide" id="q13">
+      <div class="q-ohang-tag" style="color:var(--earth);border-color:var(--earth);background:var(--earth-l)">🌍 土 · 토기</div>
+      <div class="q-num-label">Q 13 / 15</div>
+      <div class="q-text">변화와 안정 중 나는?</div>
+      <div class="q-sub">삶의 리듬에 대한 나의 선호</div>
+      <div class="opts">
+        <button class="opt-btn" onclick="answer(13,'E',2)"><span class="opt-key">一</span>안정이 최고. 익숙하고 믿을 수 있는 환경이 편해</button>
+        <button class="opt-btn" onclick="answer(13,'W',1)"><span class="opt-key">二</span>변화가 활력. 같은 게 반복되면 답답해</button>
+        <button class="opt-btn" onclick="answer(13,'M',1)"><span class="opt-key">三</span>안정된 기반 위에서 선택적으로 변화 추구</button>
+        <button class="opt-btn" onclick="answer(13,'Wa',1)"><span class="opt-key">四</span>흐름에 맡김. 억지로 바꾸거나 고집하지 않아</button>
+      </div>
+    </div>
+
+    <!-- Q14 -->
+    <div class="q-slide" id="q14">
+      <div class="q-ohang-tag" style="color:var(--metal);border-color:var(--metal);background:var(--metal-l)">⚔️ 金 · 금기</div>
+      <div class="q-num-label">Q 14 / 15</div>
+      <div class="q-text">나의 단점을 꼽는다면?</div>
+      <div class="q-sub">스스로 인정하는 내 그림자</div>
+      <div class="opts">
+        <button class="opt-btn" onclick="answer(14,'M',2)"><span class="opt-key">一</span>너무 완벽주의. 끝없이 다듬다 보면 시간이 부족해</button>
+        <button class="opt-btn" onclick="answer(14,'F',1)"><span class="opt-key">二</span>충동적인 편. 흥분해서 지르고 나서 후회할 때도 있어</button>
+        <button class="opt-btn" onclick="answer(14,'E',1)"><span class="opt-key">三</span>우유부단함. 결정 못 하고 주변 눈치 보게 됨</button>
+        <button class="opt-btn" onclick="answer(14,'Wa',1)"><span class="opt-key">四</span>너무 생각이 많음. 속으로 복잡한 게 겉으론 잘 안 나와</button>
+      </div>
+    </div>
+
+    <!-- Q15 -->
+    <div class="q-slide" id="q15">
+      <div class="q-ohang-tag" style="color:var(--water);border-color:var(--water);background:var(--water-l)">💧 水 · 수기</div>
+      <div class="q-num-label">Q 15 / 15</div>
+      <div class="q-text">나의 삶을 한 문장으로 표현한다면?</div>
+      <div class="q-sub">내 존재의 방식</div>
+      <div class="opts">
+        <button class="opt-btn" onclick="answer(15,'Wa',2)"><span class="opt-key">一</span>깊은 강처럼 — 고요하지만 모든 것을 품고 흘러가는 삶</button>
+        <button class="opt-btn" onclick="answer(15,'F',1)"><span class="opt-key">二</span>타오르는 불꽃처럼 — 뜨겁게 빛나고 주변을 따뜻하게</button>
+        <button class="opt-btn" onclick="answer(15,'W',1)"><span class="opt-key">三</span>뻗어나는 나무처럼 — 하늘을 향해 끊임없이 성장하는 삶</button>
+        <button class="opt-btn" onclick="answer(15,'E',1)"><span class="opt-key">四</span>대지처럼 — 묵묵히 모든 것을 지탱하고 포용하는 삶</button>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════ RESULT ══════════════════ -->
+<section id="result">
+
+  <div class="r-hero">
+    <div class="r-hero-rings" id="r-rings"></div>
+    <p class="r-kicker">◈ 오행 기질 분석 결과 · Four Pillars Reading ◈</p>
+    <div class="r-ohang-chip" id="r-chip"></div>
+    <span class="r-symbol" id="r-sym"></span>
+    <div class="r-hanja" id="r-hanja"></div>
+    <div class="r-name" id="r-name"></div>
+    <p class="r-desc" id="r-desc"></p>
+  </div>
+
+  <div class="r-sec">
+    <div class="r-sec-title">四柱 사주 기둥</div>
+    <div class="pillars" id="pillars"></div>
+  </div>
+  <div class="r-div"></div>
+
+  <div class="r-sec">
+    <div class="r-sec-title">五行 분포 분석</div>
+    <div class="ohang-bars" id="ohang-bars"></div>
+  </div>
+  <div class="r-div"></div>
+
+  <div class="r-sec">
+    <div class="r-sec-title">기질 키워드</div>
+    <div class="kw-wrap" id="kw-wrap"></div>
+  </div>
+  <div class="r-div"></div>
+
+  <div class="r-sec">
+    <div class="r-sec-title">사주 궁합</div>
+    <div class="compat-grid">
+      <div class="compat-card">
+        <div class="compat-tag">✦ 천생연분 상성</div>
+        <div class="compat-name" id="best-name"></div>
+        <div class="compat-desc" id="best-desc"></div>
+      </div>
+      <div class="compat-card">
+        <div class="compat-tag">◈ 성장하는 상성</div>
+        <div class="compat-name" id="good-name"></div>
+        <div class="compat-desc" id="good-desc"></div>
+      </div>
+    </div>
+  </div>
+  <div class="r-div"></div>
+
+  <div class="r-sec">
+    <div class="r-sec-title">당신에게 전하는 운세</div>
+    <div class="fortune-list" id="fortune-list"></div>
+  </div>
+  <div class="r-div"></div>
+
+  <div class="r-sec">
+    <div class="r-sec-title">조심해야 할 기운</div>
+    <div class="warn-box"><p id="warn-text"></p></div>
+  </div>
+
+  <div class="done-wrap">
+    <button class="done-btn" onclick="completeTest()">테스트 완료하기</button>
+  </div>
+</section>
+
+<div id="ov">
+  <div class="ov-sym" id="ov-sym"></div>
+  <div class="ov-title" id="ov-title"></div>
+  <div class="ov-desc" id="ov-desc"></div>
+</div>
+
+<script>
+/* ═══ 천간 지지 ═══ */
+const STEMS_C   = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+const STEMS_K   = ['갑','을','병','정','무','기','경','신','임','계'];
+const BRANCH_C  = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+const BRANCH_K  = ['자','축','인','묘','진','사','오','미','신','유','술','해'];
+const ANIMALS   = ['🐭','🐮','🐯','🐰','🐲','🐍','🐴','🐑','🐒','🐓','🐶','🐷'];
+
+const STEM_OH   = ['W','W','F','F','E','E','M','M','Wa','Wa'];
+const BRANCH_OH = ['Wa','E','W','W','E','F','F','E','M','M','E','Wa'];
+
+function getSaju(year, month, day, hourIdx) {
+  const yS = ((year-4)%10+10)%10;
+  const yB = ((year-4)%12+12)%12;
+  const mB = ((month+1)%12+12)%12;
+  const mS = ((yS%5)*2 + ((month-1+2)%12))%10;
+  const base = new Date(1900,0,1);
+  const diff = Math.floor((new Date(year,month-1,day)-base)/86400000);
+  const dS = ((diff+6)%10+10)%10;
+  const dB = ((diff+2)%12+12)%12;
+  let hS=-1, hB=-1;
+  if(hourIdx>=0){ hB=hourIdx; hS=((dS%5)*2+hourIdx)%10; }
+  return {yS,yB,mS,mB,dS,dB,hS,hB};
+}
+
+function calcOhDist(s){
+  const d={W:0,F:0,E:0,M:0,Wa:0};
+  [[s.yS,true],[s.yB,false],[s.mS,true],[s.mB,false],
+   [s.dS,true],[s.dB,false],[s.hS,true],[s.hB,false]].forEach(([v,stem])=>{
+    if(v<0)return;
+    const k=stem?STEM_OH[v]:BRANCH_OH[v];
+    if(k)d[k]++;
+  });
+  return d;
+}
+
+/* ═══ 오행 타입 ═══ */
+const TYPES = {
+  W:{
+    sym:'🌱', hanja:'木氣 · 목기', name:'목기 인재',
+    color:'var(--wood)', light:'var(--wood-l)',
+    lbl:'🌱 木 · 목기',
+    kw:['성장 지향','창의적','유연함','도전 정신','봄의 기운'],
+    desc:'끊임없이 뻗어나가는 나무의 기운을 타고난 분입니다. 새로운 것을 시작하는 능력이 탁월하고, 어떤 환경에서도 위를 향해 자라나는 생명력을 지녔어요. 창의적이고 진취적이며 변화를 두려워하지 않는 목기(木氣)형 인재.',
+    best:'수기(水氣)형', bestD:'물이 나무를 키우듯, 깊은 지혜가 당신의 성장을 뒷받침해줌',
+    good:'화기(火氣)형', goodD:'나무가 불을 만나면 빛을 발하듯, 서로의 에너지가 시너지를 이룸',
+    fortune:[
+      {i:'🌿',t:'<strong>봄의 기운이 당신 편입니다.</strong> 새로운 시작, 도전, 창업의 시기에 유리한 사주예요.'},
+      {i:'💡',t:'<strong>아이디어는 많지만 마무리가 관건.</strong> 시작의 에너지만큼 완성하는 끈기도 키워가세요.'},
+      {i:'🤝',t:'<strong>수기(水)를 가진 사람과 함께하면 성장이 배가됩니다.</strong> 지혜로운 조언자를 곁에 두세요.'}
+    ],
+    warn:'<strong>불필요한 소비와 감정적 결정을 조심하세요.</strong> 목기는 확장하려는 기운이 강한 만큼, 무분별한 확장이 오히려 뿌리를 흔들 수 있어요. 금기(金)의 기운에 특히 주의가 필요합니다.'
+  },
+  F:{
+    sym:'🔥', hanja:'火氣 · 화기', name:'화기 열정가',
+    color:'var(--fire)', light:'var(--fire-l)',
+    lbl:'🔥 火 · 화기',
+    kw:['열정','카리스마','직관력','표현력','여름의 기운'],
+    desc:'활활 타오르는 불꽃의 기운을 지닌 분입니다. 주변을 따뜻하게 밝히는 카리스마와 폭발적인 열정이 특징이에요. 어디서든 존재감이 빛나고 사람들을 끌어당기는 화기(火氣)형 열정가.',
+    best:'목기(木氣)형', bestD:'나무가 불에 힘을 실어주듯, 당신의 열정을 더욱 크게 키워줌',
+    good:'토기(土氣)형', goodD:'불이 타고 나면 대지가 됨. 안정적 지지자가 되어주는 관계',
+    fortune:[
+      {i:'☀️',t:'<strong>여름의 기운이 강한 사주입니다.</strong> 대중 앞에 서는 일, 발표, 리더십 발휘에 유리해요.'},
+      {i:'❤️',t:'<strong>사랑과 인연이 풍부한 사주.</strong> 관계에서 먼저 마음을 여는 것이 복을 부릅니다.'},
+      {i:'🎯',t:'<strong>직관이 뛰어납니다.</strong> 논리보다 첫 번째 느낌을 믿는 것이 더 좋은 결과를 만들어요.'}
+    ],
+    warn:'<strong>급한 감정과 충동적인 판단을 경계하세요.</strong> 화기는 빨리 타오르는 만큼 빨리 꺼질 수 있어요. 수기(水)의 냉정함으로 균형을 잡는 연습이 필요합니다.'
+  },
+  E:{
+    sym:'🌍', hanja:'土氣 · 토기', name:'토기 기둥',
+    color:'var(--earth)', light:'var(--earth-l)',
+    lbl:'🌍 土 · 토기',
+    kw:['안정감','포용력','신뢰','인내','사계절의 기운'],
+    desc:'모든 것을 받아들이고 지탱하는 대지의 기운을 지녔습니다. 흔들리지 않는 중심과 깊은 포용력으로 주변의 의지가 되는 분이에요. 묵묵히 모든 것을 감당하는 토기(土氣)형 기둥.',
+    best:'화기(火氣)형', bestD:'불이 흙을 단단하게 만들듯, 열정이 당신의 안정을 더욱 빛나게 해줌',
+    good:'금기(金氣)형', goodD:'흙에서 금이 나오듯, 함께하면 서로의 장점을 이끌어내는 조합',
+    fortune:[
+      {i:'🏡',t:'<strong>부동산과 뿌리 있는 사업에 유리한 사주입니다.</strong> 오래 가는 것에 투자하세요.'},
+      {i:'🫂',t:'<strong>신뢰받는 삶이 복을 부릅니다.</strong> 한 번 맺은 인연을 오래 유지하는 것이 당신의 강점.'},
+      {i:'⚖️',t:'<strong>중립과 조율의 능력이 탁월합니다.</strong> 갈등 중재자로서의 역할이 당신에게 큰 기회를 줄 거예요.'}
+    ],
+    warn:'<strong>변화를 너무 두려워하거나 고집을 부리지 마세요.</strong> 토기가 굳어지면 아무것도 자라지 못하는 메마른 땅이 됩니다. 목기(木)의 유연함을 배우는 것이 성장의 열쇠예요.'
+  },
+  M:{
+    sym:'⚔️', hanja:'金氣 · 금기', name:'금기 장인',
+    color:'var(--metal)', light:'var(--metal-l)',
+    lbl:'⚔️ 金 · 금기',
+    kw:['완벽주의','결단력','정직','날카로운 판단','가을의 기운'],
+    desc:'단단하고 예리한 금속의 기운을 타고났습니다. 옳고 그름을 명확히 구분하는 판단력과 끝까지 완성해내는 집요함이 특징이에요. 한 번 마음먹으면 반드시 해내는 금기(金氣)형 장인.',
+    best:'토기(土氣)형', bestD:'흙이 금을 품듯, 든든한 지지자가 당신의 날카로움을 더욱 빛나게 함',
+    good:'수기(水氣)형', goodD:'금이 물을 맑게 하듯, 서로의 지성이 깊어지는 조합',
+    fortune:[
+      {i:'🍂',t:'<strong>가을의 기운, 결실의 사주입니다.</strong> 오래 공들인 일이 이 시기에 완성되고 인정받아요.'},
+      {i:'🎯',t:'<strong>전문성을 쌓으면 반드시 빛납니다.</strong> 한 분야를 깊이 파는 것이 당신의 운을 여는 열쇠.'},
+      {i:'⚖️',t:'<strong>정의감이 복이 됩니다.</strong> 옳은 일을 포기하지 않는 자세가 결국 좋은 인연과 기회를 불러옵니다.'}
+    ],
+    warn:'<strong>너무 날카로운 비판과 완벽주의가 관계를 멀어지게 할 수 있어요.</strong> 금기가 지나치면 주변을 상하게 합니다. 화기(火)의 따뜻함으로 단단함 안에 온기를 더해보세요.'
+  },
+  Wa:{
+    sym:'💧', hanja:'水氣 · 수기', name:'수기 현인',
+    color:'var(--water)', light:'var(--water-l)',
+    lbl:'💧 水 · 수기',
+    kw:['지혜','통찰','유연성','깊은 감수성','겨울의 기운'],
+    desc:'깊고 고요하게 흐르는 물의 기운을 지녔습니다. 눈에 보이지 않는 것까지 꿰뚫어 보는 깊은 통찰력과 어디서든 적응하는 유연함이 특징이에요. 내면 깊은 곳에 지혜를 품은 수기(水氣)형 현인.',
+    best:'금기(金氣)형', bestD:'금이 물을 맑게 하듯, 명확한 판단력이 당신의 지혜를 더욱 빛나게 해줌',
+    good:'목기(木氣)형', goodD:'물이 나무를 키우듯, 당신의 깊은 지혜가 창의적인 사람을 꽃피우게 함',
+    fortune:[
+      {i:'❄️',t:'<strong>겨울의 기운, 내면이 강한 사주입니다.</strong> 혼자 있는 시간이 당신을 더욱 강하게 만들어요.'},
+      {i:'🔭',t:'<strong>미래를 먼저 보는 통찰력이 있습니다.</strong> 남들보다 일찍 움직이는 것이 기회를 잡는 방법.'},
+      {i:'💙',t:'<strong>감수성이 재능입니다.</strong> 글, 음악, 예술적 표현이 당신의 복을 여는 통로가 될 수 있어요.'}
+    ],
+    warn:'<strong>너무 혼자 감추고 삭히지 마세요.</strong> 수기가 막히면 고이고 썩습니다. 화기(火)의 사람들과 교류하며 감정을 표현하는 연습을 통해 막힌 기운을 흘려보내세요.'
+  }
+};
+
+const OHANG_ORDER = [
+  {k:'W', l:'목(木) · 나무', c:'var(--wood)'},
+  {k:'F', l:'화(火) · 불',   c:'var(--fire)'},
+  {k:'E', l:'토(土) · 흙',   c:'var(--earth)'},
+  {k:'M', l:'금(金) · 금속', c:'var(--metal)'},
+  {k:'Wa',l:'수(水) · 물',   c:'var(--water)'}
+];
+
+/* ═══ 상태 ═══ */
+let scores = {W:0,F:0,E:0,M:0,Wa:0};
+let sajuData = null, userName='', winner=null;
+
+/* 날짜 동적 */
+document.getElementById('inp-month').addEventListener('change', updateDays);
+document.getElementById('inp-year').addEventListener('change', updateDays);
+function updateDays(){
+  const m=parseInt(document.getElementById('inp-month').value)||0;
+  const y=parseInt(document.getElementById('inp-year').value)||2000;
+  const days=m?new Date(y,m,0).getDate():31;
+  const el=document.getElementById('inp-day');
+  const cur=el.value;
+  el.innerHTML='<option value="">일</option>';
+  for(let i=1;i<=days;i++){
+    const o=document.createElement('option');
+    o.value=i; o.textContent=i+'일';
+    if(parseInt(cur)===i)o.selected=true;
+    el.appendChild(o);
+  }
+}
+
+/* 시작 */
+function handleStart(){
+  const name=document.getElementById('inp-name').value.trim();
+  const year=parseInt(document.getElementById('inp-year').value);
+  const month=parseInt(document.getElementById('inp-month').value);
+  const day=parseInt(document.getElementById('inp-day').value);
+  const hour=parseInt(document.getElementById('inp-hour').value);
+  const warn=document.getElementById('form-warn');
+  if(!name){warn.textContent='이름을 입력해주세요';warn.classList.add('show');return;}
+  if(!year||year<1900||year>2024){warn.textContent='생년(1900~2024)을 입력해주세요';warn.classList.add('show');return;}
+  if(!month){warn.textContent='월을 선택해주세요';warn.classList.add('show');return;}
+  if(!day){warn.textContent='일을 선택해주세요';warn.classList.add('show');return;}
+  warn.classList.remove('show');
+  userName=name;
+  sajuData=getSaju(year,month,day,hour);
+  sajuData.year=year; sajuData.month=month; sajuData.day=day; sajuData.hour=hour;
+  document.getElementById('cover').style.display='none';
+  document.getElementById('quiz').style.display='block';
+  showQ(1); window.scrollTo(0,0);
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('inp-name').addEventListener('keydown',e=>{if(e.key==='Enter')handleStart();});
+});
+
+function showQ(n){
+  document.querySelectorAll('.q-slide').forEach(s=>s.classList.remove('active'));
+  const s=document.getElementById('q'+n);
+  if(s){s.style.animation='none';s.offsetHeight;s.style.animation='';s.classList.add('active');}
+  document.getElementById('qz-cur').textContent=n;
+  document.getElementById('qz-fill').style.width=((n-1)/15*100)+'%';
+  window.scrollTo(0,54);
+}
+
+let curQ=1;
+function answer(qN,type,pts){
+  scores[type]=(scores[type]||0)+pts;
+  const sl=document.getElementById('q'+qN);
+  sl.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+  setTimeout(()=>{if(qN<15){curQ=qN+1;showQ(curQ);}else showResult();},280);
+}
+
+function showResult(){
+  /* 사주 오행 반영 */
+  if(sajuData){
+    const d=calcOhDist(sajuData);
+    Object.keys(d).forEach(k=>{scores[k]=(scores[k]||0)+d[k]*2;});
+  }
+  document.getElementById('quiz').style.display='none';
+  document.getElementById('result').style.display='block';
+  window.scrollTo(0,0);
+
+  const sorted=Object.entries(scores).sort((a,b)=>b[1]-a[1]);
+  winner=sorted[0][0];
+  const t=TYPES[winner];
+
+  /* 히어로 */
+  const chip=document.getElementById('r-chip');
+  chip.textContent=t.lbl; chip.style.background=t.light; chip.style.color=t.color;
+  document.getElementById('r-sym').textContent=t.sym;
+  document.getElementById('r-hanja').textContent=t.hanja;
+  document.getElementById('r-name').textContent=t.name;
+  document.getElementById('r-name').style.color=t.color;
+  document.getElementById('r-desc').textContent=t.desc;
+
+  /* 배경 링 */
+  document.getElementById('r-rings').innerHTML=`
+    <div class="r-ring" style="width:600px;height:600px;border-color:${t.color};opacity:0.05"></div>
+    <div class="r-ring" style="width:400px;height:400px;border-color:${t.color};opacity:0.08"></div>
+    <div class="r-ring" style="width:220px;height:220px;border-color:${t.color};opacity:0.12"></div>`;
+
+  /* 사주 기둥 */
+  const pg=document.getElementById('pillars');
+  if(sajuData){
+    const cols=[
+      {l:'연주(年柱)',s:sajuData.yS,b:sajuData.yB},
+      {l:'월주(月柱)',s:sajuData.mS,b:sajuData.mB},
+      {l:'일주(日柱)',s:sajuData.dS,b:sajuData.dB},
+      {l:'시주(時柱)',s:sajuData.hS,b:sajuData.hB}
+    ];
+    pg.innerHTML=cols.map(c=>{
+      if(c.s<0&&c.l.includes('시주')){
+        return `<div class="pillar-card"><div class="pillar-label">${c.l}</div>
+          <span class="pillar-stem" style="color:var(--ink3)">—</span>
+          <span class="pillar-branch" style="color:var(--ink3)">—</span>
+          <div class="pillar-korean" style="color:var(--ink3)">미입력</div></div>`;
+      }
+      const sc=STEM_OH[c.s]?`color:${TYPES[STEM_OH[c.s]].color}`:'color:var(--gold)';
+      const bc=BRANCH_OH[c.b]?`color:${TYPES[BRANCH_OH[c.b]].color}`:'color:var(--gold2)';
+      return `<div class="pillar-card" style="border-color:${t.color}33">
+        <div class="pillar-label">${c.l}</div>
+        <span class="pillar-stem" style="${sc}">${STEMS_C[c.s]}</span>
+        <span class="pillar-branch" style="${bc}">${BRANCH_C[c.b]}</span>
+        <div class="pillar-korean">${STEMS_K[c.s]} / ${BRANCH_K[c.b]}</div>
+        <span class="pillar-animal">${ANIMALS[c.b]}</span>
+      </div>`;
+    }).join('');
+  }
+
+  /* 오행 바 */
+  const total=Object.values(scores).reduce((a,b)=>a+b,0)||1;
+  const bw=document.getElementById('ohang-bars');
+  bw.innerHTML='';
+  OHANG_ORDER.forEach(o=>{
+    const pct=Math.round((scores[o.k]||0)/total*100);
+    const row=document.createElement('div');
+    row.className='ohang-bar-row';
+    row.innerHTML=`
+      <div class="ohang-lbl-wrap">
+        <div class="ohang-dot" style="background:${o.c}"></div>
+        <span class="ohang-lbl" style="color:${o.c}">${o.l}</span>
+      </div>
+      <div class="ohang-track"><div class="ohang-fill" id="of-${o.k}" style="background:${o.c}"></div></div>
+      <div class="ohang-pct" style="color:${o.c}" id="ov-${o.k}">0%</div>`;
+    bw.appendChild(row);
+  });
+  setTimeout(()=>{
+    OHANG_ORDER.forEach(o=>{
+      const pct=Math.round((scores[o.k]||0)/total*100);
+      document.getElementById('of-'+o.k).style.width=pct+'%';
+      document.getElementById('ov-'+o.k).textContent=pct+'%';
+    });
+  },300);
+
+  /* 키워드 */
+  const kw=document.getElementById('kw-wrap');
+  kw.innerHTML='';
+  t.kw.forEach(w=>{
+    const s=document.createElement('span');
+    s.className='kw'; s.textContent=w;
+    s.style.color=t.color; s.style.borderColor=t.color+'55'; s.style.background=t.light;
+    kw.appendChild(s);
+  });
+
+  /* 궁합 */
+  document.getElementById('best-name').textContent=t.best;
+  document.getElementById('best-name').style.color=t.color;
+  document.getElementById('best-desc').textContent=t.bestD;
+  document.getElementById('good-name').textContent=t.good;
+  document.getElementById('good-name').style.color=t.color;
+  document.getElementById('good-desc').textContent=t.goodD;
+
+  /* 운세 */
+  const fl=document.getElementById('fortune-list');
+  fl.innerHTML='';
+  t.fortune.forEach(f=>{
+    const d=document.createElement('div');
+    d.className='fortune-item';
+    d.innerHTML=`<div class="fortune-ico">${f.i}</div><div class="fortune-txt">${f.t}</div>`;
+    fl.appendChild(d);
+  });
+
+  /* 경고 */
+  document.getElementById('warn-text').innerHTML=t.warn;
+}
+
+function completeTest(){
+  const t=winner?TYPES[winner]:TYPES['W'];
+  document.getElementById('ov-sym').textContent=t.sym;
+  document.getElementById('ov-title').textContent=userName+'님의 기질 — '+t.name;
+  document.getElementById('ov-title').style.color=t.color;
+  document.getElementById('ov-desc').innerHTML=t.hanja+'<br>오행 분석이 완료됐어요<br><br>잠시 후 창이 닫힙니다';
+  document.getElementById('ov').classList.add('show');
+  setTimeout(()=>window.close(),3000);
+}
+</script>
+</body>
+</html>
